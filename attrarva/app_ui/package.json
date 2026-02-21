@@ -1,0 +1,31 @@
+{
+    "name": "app_ui",
+    "version": "1.0.0",
+    "description": "WriteLingo React Frontend",
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "axios": "^1.7.9",
+        "framer-motion": "^12.4.2",
+        "lucide-react": "^0.475.0",
+        "next": "15.1.7",
+        "react": "19.0.0",
+        "react-dom": "19.0.0",
+        "recharts": "^3.7.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "autoprefixer": "^10.4.24",
+        "eslint": "^9",
+        "eslint-config-next": "15.1.7",
+        "postcss": "^8",
+        "tailwindcss": "^3.4.1",
+        "typescript": "^5"
+    }
+}

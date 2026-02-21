@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sarvamai
+spacy
+nltk
+python-dotenv
+requests
+pydantic
+plotly
