@@ -17,7 +17,7 @@ echo 📦 Installing dependencies from requirements.txt...
 pip install -r requirements.txt
 
 :: Start the server
-echo 🔥 Launching Uvicorn on http://localhost:8001...
-uvicorn main:app --reload --port 8001
+echo 🔥 Launching Uvicorn on http://localhost:8002...
+uvicorn main:app --reload --port 8002
 
 pause

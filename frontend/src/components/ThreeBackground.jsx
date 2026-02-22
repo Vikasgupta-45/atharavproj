@@ -102,11 +102,11 @@ function ThreeBackground() {
 
     /* ── Animation loop ──────────────────────── */
     let frameId;
-    const clock = new THREE.Clock();
+    let startTime = performance.now();
 
     const animate = () => {
       frameId = requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
+      const t = (performance.now() - startTime) / 1000;
 
       target.x += (mouse.x - target.x) * 0.04;
       target.y += (mouse.y - target.y) * 0.04;

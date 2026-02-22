@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "http://localhost:8001/api";
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -43,6 +43,11 @@ export async function analyzeText({ text, style = "clear" }) {
   return res.data; // { output, consistency, explanation, diff }
 }
 
+export async function apiLiveCheck({ text, topic }) {
+  const res = await api.post("/analyze/live", { text, topic });
+  return res.data; // { is_on_topic, relevance_score, suggestion }
+}
+
 // ── Chat ─────────────────────────────────────────────────────────────────
 export async function apiChat(message, context = "") {
   const res = await api.post("/chat", { message, context });
@@ -53,6 +58,17 @@ export async function apiChat(message, context = "") {
 export async function apiGetSessions() {
   const res = await api.get("/sessions");
   return res.data; // { sessions }
+}
+
+// ── Multilang (Sarvam AI) ────────────────────────────────────────────────
+export async function apiGetLanguages() {
+  const res = await api.get("/sarvam/languages");
+  return res.data;
+}
+
+export async function apiTranslate({ text, target_language, source_language }) {
+  const res = await api.post("/sarvam/translate", { text, target_language, source_language });
+  return res.data;
 }
 
 // ── Game Backend Integration ──────────────────────────────────────────

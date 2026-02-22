@@ -1,5 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { jsPDF } from 'jspdf';
+import { Download, Upload } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 /* Point pdfjs to its worker (bundled by Vite from node_modules) */
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -14,8 +17,6 @@ const typoMap = {
   depend: { correction: 'dependent', reason: 'The adjective form needed here is "dependent".' },
   technologyy: { correction: 'technology', reason: 'Extra "y" — spelling error.' },
   technologye: { correction: 'technology', reason: 'Extra "e" — spelling error.' },
-  then: { correction: 'than', reason: '"Than" is used for comparisons; "then" refers to time.' },
-  create: { correction: 'creates', reason: 'Singular subject "This" requires "creates".' },
   oppurtunities: { correction: 'opportunities', reason: 'Misspelling — correct is "opportunities".' },
   spends: { correction: 'spend', reason: 'Plural subject "students" takes "spend".' },
   medias: { correction: 'media', reason: '"Media" is already plural.' },
@@ -33,10 +34,24 @@ const typoMap = {
 
 const wordPattern = /^([^A-Za-z']*)([A-Za-z']+)([^A-Za-z']*)$/;
 
-function getSuggestion(token) {
+function getSuggestion(token, aiSuggestions = []) {
   const m = token.match(wordPattern);
   if (!m) return null;
-  return typoMap[m[2].toLowerCase()] || null;
+  const word = m[2].toLowerCase();
+
+  // 1. Check local static dictionary (fast)
+  if (typoMap[word]) return typoMap[word];
+
+  // 2. Check AI suggestions from backend
+  const aiMatch = aiSuggestions.find(s => s.before.toLowerCase() === word);
+  if (aiMatch) {
+    return {
+      correction: aiMatch.after,
+      reason: "Artificial Intelligence detected a grammar or spelling inconsistency here."
+    };
+  }
+
+  return null;
 }
 
 /* shared styles for textarea + backdrop so they line up perfectly */
@@ -53,12 +68,49 @@ const editorStyle = {
 };
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
-function TextEditor({ value, onChange, onFileUpload }) {
+function TextEditor({ value, onChange, onFileUpload, isGenerating, aiSuggestions = [] }) {
   const textareaRef = useRef(null);
   const wrapRef = useRef(null);
   const [tooltip, setTooltip] = useState(null); // { tokenIndex, word, suggestion, top, left }
 
   const [uploading, setUploading] = useState(false);
+
+  const handleExportPDF = () => {
+    if (!value.trim()) return;
+    try {
+      const doc = new jsPDF();
+
+      // Define styles
+      const margin = 20;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const contentWidth = pageWidth - (margin * 2);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(13, 148, 136); // brand-primary color #0D9488
+      doc.text("Sarthak AI - Document", margin, 30);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, margin, 38);
+
+      doc.setDrawColor(204, 251, 241); // #CCFBF1
+      doc.line(margin, 42, pageWidth - margin, 42);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(31, 41, 55); // gray-800
+
+      const splitContent = doc.splitTextToSize(value, contentWidth);
+      doc.text(splitContent, margin, 55);
+
+      doc.save(`Sarthak_AI_Document_${new Date().getTime()}.pdf`);
+    } catch (err) {
+      console.error("PDF Export failed:", err);
+      alert("Failed to export PDF. Please try again.");
+    }
+  };
 
   /* File upload — supports .txt and .pdf */
   const handleFile = async (e) => {
@@ -98,8 +150,8 @@ function TextEditor({ value, onChange, onFileUpload }) {
 
   /* Error count */
   const errorCount = useMemo(
-    () => tokens.reduce((n, t) => (getSuggestion(t) ? n + 1 : n), 0),
-    [tokens],
+    () => tokens.reduce((n, t) => (getSuggestion(t, aiSuggestions) ? n + 1 : n), 0),
+    [tokens, aiSuggestions],
   );
 
   /* Apply correction */
@@ -157,8 +209,32 @@ function TextEditor({ value, onChange, onFileUpload }) {
               ✓ All clear
             </span>
           )}
-          <label className="cursor-pointer rounded-full border border-[#5EEAD4] bg-[#F0FDFA] px-4 py-2 text-sm font-medium text-brand-primary transition hover:bg-[#CCFBF1]">
-            {uploading ? 'Reading PDF…' : 'Upload .txt / .pdf'}
+          {value.trim() && (
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 rounded-full border border-brand-primary bg-white px-4 py-2 text-sm font-semibold text-brand-primary transition hover:bg-brand-primary hover:text-white"
+            >
+              <Download size={15} />
+              Export PDF
+            </button>
+          )}
+          <label className={`flex cursor-pointer items-center gap-2 rounded-full border border-[var(--light-lav)] px-4 py-2 text-sm font-medium transition ${uploading ? 'bg-[var(--primary)] text-white shadow-[0_0_15px_rgba(13,148,136,0.5)] cursor-wait' : 'bg-[var(--bg-soft)] text-brand-primary hover:bg-[#CCFBF1]'}`}>
+            {uploading ? (
+              <>
+                <div className="flex items-center gap-2 animate-pulse">
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-white"></span>
+                  </span>
+                  Processing Text...
+                </div>
+              </>
+            ) : (
+              <>
+                <Upload size={15} />
+                Upload .txt / .pdf
+              </>
+            )}
             <input
               type="file"
               accept=".txt,.pdf,application/pdf"
@@ -170,22 +246,56 @@ function TextEditor({ value, onChange, onFileUpload }) {
         </div>
       </div>
 
+      {/* Extra Pop-up when uploading to encourage game exploration */}
+      <AnimatePresence>
+        {uploading && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl animate-bounce">🎮</span>
+              <div>
+                <h4 className="font-bold text-indigo-900 text-sm">Processing your file...</h4>
+                <p className="text-xs text-indigo-700 mt-1 font-medium">
+                  This might take a few seconds. While you wait, why not check out the <a href="/games/profile" target="_blank" rel="noreferrer" className="underline font-bold text-indigo-600 hover:text-indigo-800 pointer-events-auto">Games Section</a>?
+                  Earn XP and level up your writer profile!
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Editor stack ───────────────────────────────────────────────── */}
       <div
         ref={wrapRef}
-        className="relative rounded-xl border border-[#CCFBF1] bg-white focus-within:border-brand-primary focus-within:shadow-[0_0_0_4px_rgba(13,148,136,0.15)] transition"
+        className={`relative rounded-xl border border-[#CCFBF1] bg-white transition ${isGenerating ? 'select-none pointer-events-none' : 'focus-within:border-brand-primary focus-within:shadow-[0_0_0_4px_rgba(13,148,136,0.15)]'}`}
         style={{ height: '22rem', overflow: 'hidden' }}
         onMouseLeave={() => setTooltip(null)}
       >
+        {isGenerating && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[2px]">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/90 px-6 py-3 shadow-sm border border-[#CCFBF1]">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-primary opacity-75"></span>
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-brand-primary"></span>
+              </span>
+              <p className="text-sm font-bold text-brand-primary animate-pulse">AI is rewriting your draft...</p>
+            </div>
+          </div>
+        )}
         {/* ① Backdrop: renders highlighted HTML, scrolls in sync */}
         <div
           ref={backdropRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl text-sm text-transparent"
-          style={editorStyle}
+          className={`pointer-events-none absolute inset-0 overflow-hidden rounded-xl text-sm ${isGenerating ? 'blur-[3px] opacity-50 transition-all duration-300' : 'text-transparent'}`}
+          style={{ ...editorStyle, color: isGenerating ? 'rgba(31,41,55,0.92)' : 'transparent' }}
         >
           {tokens.map((token, i) => {
-            const sug = getSuggestion(token);
+            const sug = getSuggestion(token, aiSuggestions);
             return sug ? (
               <mark
                 key={i}
@@ -216,7 +326,7 @@ function TextEditor({ value, onChange, onFileUpload }) {
           onScroll={handleScroll}
           placeholder="Paste your draft or start typing here. Misspelled words will be highlighted in red instantly…"
           spellCheck={false}
-          className="relative w-full resize-none rounded-xl bg-transparent text-sm outline-none placeholder:text-slate-400"
+          className={`relative w-full resize-none rounded-xl bg-transparent text-sm outline-none placeholder:text-slate-400 ${isGenerating ? 'opacity-0' : ''}`}
           style={{
             ...editorStyle,
             height: '22rem',
@@ -235,6 +345,7 @@ function TextEditor({ value, onChange, onFileUpload }) {
           onHover={setTooltip}
           onFix={applyFix}
           editorStyle={editorStyle}
+          aiSuggestions={aiSuggestions}
         />
 
         {/* ④ Tooltip / hover card */}
@@ -272,7 +383,7 @@ function TextEditor({ value, onChange, onFileUpload }) {
           ) : (
             <div className="divide-y divide-[#CCFBF1]">
               {tokens.reduce((acc, token, tokenIndex) => {
-                const sug = getSuggestion(token);
+                const sug = getSuggestion(token, aiSuggestions);
                 if (!sug) return acc;
                 const word = token.trim();
                 // Deduplicate: skip if same wrong word already shown
@@ -319,14 +430,14 @@ function TextEditor({ value, onChange, onFileUpload }) {
 }
 
 /* ─── HoverLayer: mirrors backdrop text, makes typo spans pointer-interactive ─ */
-function HoverLayer({ tokens, wrapRef, onHover, onFix, editorStyle }) {
+function HoverLayer({ tokens, wrapRef, onHover, onFix, editorStyle, aiSuggestions }) {
   return (
     <div
       className="absolute inset-0 overflow-hidden rounded-xl text-sm"
       style={{ ...editorStyle, zIndex: 2, color: 'transparent', pointerEvents: 'none' }}
     >
       {tokens.map((token, i) => {
-        const sug = getSuggestion(token);
+        const sug = getSuggestion(token, aiSuggestions);
         if (!sug) return <span key={i}>{token}</span>;
 
         return (

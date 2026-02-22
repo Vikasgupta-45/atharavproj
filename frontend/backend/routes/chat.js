@@ -7,34 +7,50 @@ const router = Router();
 router.post("/", auth, async (req, res) => {
     try {
         const { message, context = "" } = req.body;
-        if (!message || !message.trim()) {
-            return res.status(400).json({ error: "message is required" });
+        const groqKey = process.env.GROQ_API_KEY;
+        if (!groqKey) {
+            return res.status(500).json({ error: "Missing GROQ_API_KEY in backend .env" });
         }
 
-        const lower = message.toLowerCase();
-        let reply;
+        const systemPrompt = `You are an AI writing assistant. The user will give you a draft text and a request. 
+If the user asks to modify the text (e.g., "make this happier", "fix grammar", "make it shorter"), completely rewrite the text according to their request and return a JSON object with two keys:
+- "reply": A brief conversational message about what you did.
+- "modifiedText": The completely rewritten draft text reflecting their changes.
 
-        if (lower.includes("fix") || lower.includes("grammar") || lower.includes("correct")) {
-            reply =
-                "Use the highlighted words in the editor preview and click each suggestion to apply instant corrections. You can also click 'Analyze Writing' for a full rewrite.";
-        } else if (lower.includes("tone") || lower.includes("formal") || lower.includes("style")) {
-            reply =
-                "For a stronger tone, prefer shorter sentences and more direct verbs. Select a style from the Style Selector and click Analyze to generate it.";
-        } else if (lower.includes("short") || lower.includes("compress") || lower.includes("condense")) {
-            reply =
-                "I can compress your draft by 25-35% while keeping the meaning. Click 'Analyze Writing' to generate a compressed version.";
-        } else if (lower.includes("rewrite") || lower.includes("improve") || lower.includes("enhance")) {
-            reply =
-                "Choose your preferred writing style ('Creative', 'Formal', 'Persuasive') from the selector, then click Analyze to get an AI-improved version.";
-        } else if (lower.includes("hello") || lower.includes("hi") || lower.includes("hey")) {
-            reply = "Hello! I'm your AI writing assistant. Ask me about grammar, tone, style, or text compression — I'm here to help!";
-        } else {
-            reply =
-                'I can help improve your writing! Try asking:\n• "Fix my grammar"\n• "Rewrite this in formal tone"\n• "Make this shorter"\n• "Improve the style"';
+If the user just says "hello", asks a general question, or gives an invalid request, answer conversationally and return JSON:
+- "reply": Your conversational response.
+- "modifiedText": null
+
+Respond ONLY with a valid JSON object matching this schema.`;
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${groqKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `Draft: ${context}\n\nRequest: ${message}` }
+                ],
+                response_format: { type: "json_object" }
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Groq API error:", errorText);
+            throw new Error(`Failed to communicate with AI Chat Engine: ${errorText}`);
         }
 
-        res.json({ reply });
+        const data = await response.json();
+        const aiJson = JSON.parse(data.choices[0].message.content);
+
+        res.json({ reply: aiJson.reply, modifiedText: aiJson.modifiedText });
     } catch (err) {
+        console.error("Chat Route Exception:", err);
         res.status(500).json({ error: err.message });
     }
 });

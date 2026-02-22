@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FileClock, Files, Sparkles, UserCircle2, Zap, Award } from 'lucide-react';
+import { FileClock, Files, Sparkles, UserCircle2, Zap, Award, Languages } from 'lucide-react';
 import AIChatPanel from '../components/AIChatPanel';
 import AnalyzeButton from '../components/AnalyzeButton';
 import ConsistencyPanel from '../components/ConsistencyPanel';
@@ -10,8 +10,9 @@ import ExplanationPanel from '../components/ExplanationPanel';
 import OutputViewer from '../components/OutputViewer';
 import StyleSelector from '../components/StyleSelector';
 import TextEditor from '../components/TextEditor';
+import LanguageSupport from '../components/LanguageSupport';
 import { useAuth } from '../context/AuthContext';
-import { analyzeText } from '../services/api';
+import { analyzeText, apiLiveCheck } from '../services/api';
 import { getUserStats } from '../games/lib/api';
 
 const menu = [
@@ -32,8 +33,15 @@ function Dashboard() {
   const [text, setText] = useState('');
   const [style, setStyle] = useState('clear');
   const [loading, setLoading] = useState(false);
+  const [isChatGenerating, setIsChatGenerating] = useState(false);
   const [result, setResult] = useState(null);
+  const [translatedText, setTranslatedText] = useState('');
   const [gameStats, setGameStats] = useState({ level: 1, xp: 0 });
+
+  // ── Live Recommendations State ──
+  const [topic, setTopic] = useState('');
+  const [liveResult, setLiveResult] = useState(null);
+  const [isLiveChecking, setIsLiveChecking] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -50,6 +58,28 @@ function Dashboard() {
   }, [user]);
 
   const usageCount = useMemo(() => sessions.length, [sessions.length]);
+
+  // ── Live Check Logic (Debounced) ──
+  useEffect(() => {
+    if (!text.trim() || !topic.trim()) {
+      setLiveResult(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsLiveChecking(true);
+      try {
+        const res = await apiLiveCheck({ text, topic });
+        setLiveResult(res);
+      } catch (err) {
+        console.error("Live check failed:", err);
+      } finally {
+        setIsLiveChecking(false);
+      }
+    }, 1500); // 1.5s debounce
+
+    return () => clearTimeout(timer);
+  }, [text, topic]);
 
   const handleAnalyze = async () => {
     if (!text.trim()) {
@@ -159,15 +189,102 @@ function Dashboard() {
         {active === 'docs' && (
           <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
             <div className="space-y-4 pr-2">
-              <div className="section-soft p-4">
-                <h2 className="section-title">Writer Workspace</h2>
-                <p className="mt-1 text-sm text-brand-muted">Edit your draft and hover flagged words to apply quick corrections.</p>
+              <div className="section-soft p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="section-title">Writer Workspace</h2>
+                  <p className="mt-1 text-sm text-brand-muted">Edit your draft and hover flagged words to apply quick corrections.</p>
+                </div>
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      placeholder="Enter focus topic (e.g. Climate Change)"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      className="text-xs px-3 py-2 rounded-lg border border-[#CCFBF1] bg-white w-56 focus:border-brand-primary outline-none transition-all shadow-sm"
+                    />
+                    <div className="absolute -top-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-800 text-white text-[10px] px-2 py-1 rounded">
+                      Live Recommendations track your focus
+                    </div>
+                  </div>
+                  <LanguageSupport text={text} onTranslated={setTranslatedText} />
+                </div>
               </div>
 
-              <TextEditor value={text} onChange={setText} onFileUpload={setText} />
-              <StyleSelector value={style} onChange={setStyle} />
-              <AnalyzeButton onClick={handleAnalyze} loading={loading} disabled={!text.trim()} />
+              <AnimatePresence>
+                {liveResult?.suggestion && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className={`p-3 rounded-xl border flex items-center gap-3 mb-2 ${liveResult.is_on_topic ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100'}`}>
+                      <span className="text-xl">{liveResult.is_on_topic ? '💡' : '⚠️'}</span>
+                      <p className={`text-xs font-medium ${liveResult.is_on_topic ? 'text-blue-700' : 'text-amber-700'}`}>
+                        {isLiveChecking ? 'Analyzing...' : liveResult.suggestion}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
+              <TextEditor
+                value={text}
+                onChange={setText}
+                onFileUpload={setText}
+                isGenerating={isChatGenerating}
+                aiSuggestions={result?.changes}
+              />
+
+              <AnimatePresence>
+                {translatedText && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                  >
+                    <div id="translated-result-card" className="glass-card border-2 border-[#0D9488] p-6 bg-[#F0FDFA] mt-4 relative overflow-hidden shadow-2xl">
+                      <div className="absolute top-0 right-0 p-2 bg-[#0D9488] text-white text-[9px] font-black uppercase rounded-bl-xl">
+                        Sarvam Translation
+                      </div>
+
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-white rounded-xl text-[#0D9488] border border-[#CCFBF1]">
+                          <Languages size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black uppercase tracking-widest text-[#0D9488]">Translated Script</h3>
+                          <p className="text-[10px] text-brand-muted font-bold uppercase">Multilingual conversion successful</p>
+                        </div>
+                      </div>
+
+                      <div className="text-base text-gray-800 leading-relaxed font-semibold whitespace-pre-wrap bg-white p-5 rounded-2xl border border-[#CCFBF1] shadow-inner mb-4">
+                        {translatedText}
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => { setText(translatedText); setTranslatedText(''); }}
+                          className="flex-1 bg-[#0D9488] text-white text-xs font-black py-3 rounded-xl hover:bg-[#0F766E] transition-all shadow-lg uppercase tracking-wider"
+                        >
+                          Apply to Document Editor
+                        </button>
+                        <button
+                          onClick={() => setTranslatedText('')}
+                          className="px-6 bg-white border border-red-200 text-red-500 text-xs font-black py-3 rounded-xl hover:bg-red-50 transition-all uppercase tracking-wider"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <StyleSelector value={style} onChange={setStyle} />
+
+              <AnalyzeButton onClick={handleAnalyze} loading={loading} disabled={!text.trim()} />
               <div className="grid gap-4 xl:grid-cols-2">
                 <OutputViewer output={result?.output} />
                 <ConsistencyPanel data={result?.consistency} />
@@ -175,8 +292,94 @@ function Dashboard() {
                 <ExplanationPanel explanation={result?.explanation} />
               </div>
             </div>
+
+            {/* Full Screen Loading Game Modal */}
+            <AnimatePresence>
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    transition={{ type: "spring", bounce: 0.4 }}
+                    className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-[0_0_50px_rgba(13,148,136,0.3)]"
+                  >
+                    {/* Close button that does NOT trigger the redirect */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // While the backend request will continue, we hide the visual loading screen
+                        setLoading(false);
+                      }}
+                      className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition hover:bg-black/40"
+                    >
+                      ✕
+                    </button>
+
+                    {/* Wrapper for the clickable area */}
+                    <div
+                      onClick={() => window.location.href = 'http://localhost:5173/games'}
+                      className="cursor-pointer hover:scale-[1.02] transition-transform origin-bottom"
+                    >
+                      {/* Top cool graphic area */}
+                      <div className="bg-gradient-to-br from-[#0D9488] via-teal-500 to-[#2DD4BF] p-8 text-center relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                        <motion.div
+                          animate={{
+                            rotate: [0, -10, 10, -10, 10, 0],
+                            y: [0, -15, 0]
+                          }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          className="text-7xl mb-4 drop-shadow-2xl"
+                        >
+                          🎮
+                        </motion.div>
+                        <h3 className="text-2xl font-black text-white tracking-widest uppercase mt-4">
+                          AI is Analyzing...
+                        </h3>
+                        <p className="text-teal-50 mt-2 font-medium text-sm drop-shadow-sm">
+                          Our highly advanced AI engines are rewriting your script for perfection.
+                        </p>
+                      </div>
+
+                      {/* Bottom action area */}
+                      <div className="p-8 bg-white text-center">
+                        <div className="flex justify-center mb-6">
+                          <div className="flex gap-2">
+                            <span className="h-3 w-3 rounded-full bg-[#0D9488] animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="h-3 w-3 rounded-full bg-teal-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="h-3 w-3 rounded-full bg-[#2DD4BF] animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                          </div>
+                        </div>
+
+                        <h4 className="text-lg font-bold text-slate-800 mb-2">Don't just stare at a loading screen!</h4>
+                        <p className="text-sm text-slate-500 mb-6 font-medium">
+                          Level up your writer profile, earn XP, and unlock Pro features by playing quick writing games. Click anywhere to play!
+                        </p>
+
+                        <div className="inline-flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-gradient-to-r from-[#0D9488] to-[#2DD4BF] text-white font-black uppercase tracking-widest text-sm shadow-lg border-b-4 border-teal-700 active:border-b-0 active:translate-y-1 transition-all">
+                          Play Games Now! <Zap size={18} className="fill-current" />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="hidden xl:block">
-              <AIChatPanel text={text} />
+              <AIChatPanel
+                text={text}
+                onTextUpdate={(newText) => {
+                  setText(newText);
+                  setResult(null); // Clear previous analysis results so it displays the fresh text
+                }}
+                onGenerating={setIsChatGenerating}
+              />
             </div>
           </div>
         )}

@@ -2,7 +2,7 @@ import { Bot, SendHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { apiChat } from '../services/api';
 
-function AIChatPanel({ text }) {
+function AIChatPanel({ text, onTextUpdate, onGenerating }) {
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -32,10 +32,16 @@ function AIChatPanel({ text }) {
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setSending(true);
+    if (onGenerating) onGenerating(true);
 
     try {
-      const { reply } = await apiChat(trimmed, text);
-      setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: reply }]);
+      const { reply, modifiedText } = await apiChat(trimmed, text);
+      const aiReply = modifiedText ? `I've updated the text for you!\n\n${reply}` : reply;
+      setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: aiReply }]);
+
+      if (modifiedText && onTextUpdate) {
+        onTextUpdate(modifiedText);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -43,6 +49,7 @@ function AIChatPanel({ text }) {
       ]);
     } finally {
       setSending(false);
+      if (onGenerating) onGenerating(false);
     }
   };
 
