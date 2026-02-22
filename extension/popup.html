@@ -1,0 +1,204 @@
+﻿<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Write Assistant</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 320px;
+      font-family: 'Manrope', Segoe UI, sans-serif;
+      background: #ffffff;
+      color: #1f2937;
+    }
+
+    .header {
+      padding: 18px 16px;
+      border-bottom: 1px solid #ccfbf1;
+      background: radial-gradient(circle at 10% 20%, rgba(13, 148, 136, 0.05), transparent 80%), #ffffff;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #0d9488;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      margin: 4px 0 0;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    .section-title {
+      margin: 0;
+      padding: 14px 16px 8px;
+      color: #0d9488;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .wrap {
+      padding: 0 16px 16px;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      border: 1px solid #ccfbf1;
+      background: #f0fdfa;
+      color: #0d9488;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .btn:hover {
+      background: #ccfbf1;
+      border-color: #5eead4;
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: #0d9488;
+      border-color: #0d9488;
+      color: white;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+    }
+
+    .btn.primary:hover {
+      background: #0f766e;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(13, 148, 136, 0.3);
+    }
+
+    .preview {
+      margin-top: 10px;
+      background: #f0fdfa;
+      border: 1px solid #ccfbf1;
+      border-left: 4px solid #0d9488;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      color: #1f2937;
+      display: none;
+      font-weight: 500;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid #ccfbf1;
+      background: #ffffff;
+      color: #1f2937;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: #0d9488;
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .save {
+      margin-top: 8px;
+    }
+
+    .status {
+      font-size: 12px;
+      color: #0d9488;
+      min-height: 16px;
+      margin-top: 8px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .hint {
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header" style="display: flex; align-items: center; gap: 12px;">
+    <img src="logo.svg" alt="Sarthak Logo" width="36" height="36" />
+    <div>
+      <h1>Sarthak AI</h1>
+      <p>Analyze text or OCR selected areas with AI.</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Quick Actions</h2>
+  <div class="wrap">
+    <div class="actions">
+      <button class="btn primary" id="btn-analyze">Analyze Selection</button>
+      <button class="btn" id="btn-clipboard">Analyze Clipboard (Docs)</button>
+    </div>
+    <div class="preview" id="selection-preview"></div>
+    <div class="hint">OCR Area: Click and drag a box. Uses local Tesseract.js OCR (no backend required). First use may
+      take a moment to load the OCR engine.</div>
+  </div>Use Analyze Clipboard to process text from Google Docs or other web apps
+
+  <h2 class="section-title">API Settings</h2>
+  <div class="wrap">
+    <div class="field">
+      <label for="api-base">API Base URL</label>
+      <input id="api-base" type="text" placeholder="http://localhost:8000" />
+    </div>
+    <div class="field">
+      <label for="path-analyze">Analyze Path</label>
+      <input id="path-analyze" type="text" placeholder="/analyze" />
+    </div>
+    <div class="field">
+      <label for="target-tone">Default Tone</label>
+      <select id="target-tone">
+        <option value="neutral">Neutral</option>
+        <option value="formal">Formal</option>
+        <option value="informal">Informal</option>
+      </select>
+    </div>
+    <button class="btn primary save" id="save-settings">Save Settings</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

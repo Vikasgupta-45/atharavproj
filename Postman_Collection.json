@@ -1,0 +1,411 @@
+{
+  "info": {
+    "name": "AI Text Analysis Engine - API Testing",
+    "description": "Collection of test requests for the AI Text Analysis Engine FastAPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Casual to Formal Conversion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"hey guys, this project is absolutely awesome and I'm super stoked! can't wait to show everyone what we did\",\n  \"target_tone\": \"formal\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test converting casual/informal language to formal tone"
+      }
+    },
+    {
+      "name": "2. Technical to Informal Conversion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"The implementation of said algorithm demonstrates exceptional performance metrics and warrants comprehensive evaluation across multiple operational domains.\",\n  \"target_tone\": \"informal\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test converting technical/formal language to informal tone"
+      }
+    },
+    {
+      "name": "3. Emotional to Neutral Conversion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"I absolutely LOVE this amazing product! It's fantastic, wonderful, and incredible! This is the best thing ever!\",\n  \"target_tone\": \"neutral\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test converting emotional language to neutral, objective tone"
+      }
+    },
+    {
+      "name": "4. Neutral Default (No Tone Conversion)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"The quick brown fox jumps over the lazy dog. This is a sample sentence for testing purposes. It contains multiple clauses and ideas to ensure comprehensive analysis.\",\n  \"target_tone\": \"neutral\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test analysis with neutral tone (default)"
+      }
+    },
+    {
+      "name": "5. Long Document Analysis - Formal to Informal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"When we examine the historical context of the technological revolution, we find that innovation has consistently driven societal progress. The emergence of digital systems has fundamentally transformed how we communicate, work, and interact. Through careful analysis of these mechanisms, we can better understand the trajectory of human advancement and prepare accordingly for future challenges. The implications are profound and far-reaching across all sectors of society.\",\n  \"target_tone\": \"informal\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test with longer, more complex formal text"
+      }
+    },
+    {
+      "name": "6. Short Casual Text to Formal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"yo what's up\",\n  \"target_tone\": \"formal\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test with very short casual text"
+      }
+    },
+    {
+      "name": "7. Business Email - Casual to Formal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Hey there! Thanks so much for your help buddy, really appreciate it! Let me know if you need anything else, no problem at all!\",\n  \"target_tone\": \"formal\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test with casual business communication"
+      }
+    },
+    {
+      "name": "8. Academic Paper - to Informal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"The empirical results substantiate our hypothesis regarding the efficacy of this innovative methodology. Furthermore, statistical analysis reveals significant correlations with previously established paradigms. These findings contribute substantially to the extant literature in this domain.\",\n  \"target_tone\": \"informal\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test with academic/scholarly language"
+      }
+    },
+    {
+      "name": "9. Marketing Copy - to Neutral",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Our AMAZING product is the BEST thing ever created in the ENTIRE history of mankind! Don't miss out on this INCREDIBLE opportunity! Limited time offer - ACT NOW!\",\n  \"target_tone\": \"neutral\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test with marketing/sales language"
+      }
+    },
+    {
+      "name": "10. Mixed Tone Text - to Neutral",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Well, you see, the thing is, this is actually quite sophisticated and complex, innit? Yeah, so like, it's proper brilliant but also kinda confusing, you know?\",\n  \"target_tone\": \"neutral\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test with mixed tone and colloquial language"
+      }
+    },
+    {
+      "name": "ERROR TEST: Empty Text",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"\",\n  \"target_tone\": \"neutral\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test error handling - empty text (should return 422 validation error)"
+      }
+    },
+    {
+      "name": "ERROR TEST: Invalid Tone",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Sample text\",\n  \"target_tone\": \"sarcastic\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test error handling - invalid tone value (should return 422 validation error)"
+      }
+    },
+    {
+      "name": "ERROR TEST: Missing Text Field",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_tone\": \"neutral\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "analyze"
+          ]
+        },
+        "description": "Test error handling - missing required field (should return 422 validation error)"
+      }
+    },
+    {
+      "name": "INFO: View API Documentation",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/docs",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "docs"
+          ]
+        },
+        "description": "Open Swagger UI documentation in browser. Click this and then 'Send' to navigate to interactive API docs"
+      }
+    },
+    {
+      "name": "INFO: Alternative API Docs (ReDoc)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/redoc",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "redoc"
+          ]
+        },
+        "description": "Open ReDoc alternative API documentation. Click this and then 'Send' to navigate"
+      }
+    }
+  ]
+}

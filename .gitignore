@@ -16,9 +16,32 @@ yarn-error.log*
 **/__pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
+*.log
 
 # Environment Variables
 **/.env
@@ -30,6 +53,7 @@ htmlcov/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS files
 .DS_Store
@@ -40,3 +64,11 @@ Thumbs.db
 **/frontend/node_modules/
 **/attrarva/app_ui/node_modules/
 **/attrarva/vite_ui/node_modules/
+
+# ML/AI Models & Large Files
+*.safetensors
+*.bin
+*.pt
+*.pth
+**/grammar_results/
+**/checkpoint-*/

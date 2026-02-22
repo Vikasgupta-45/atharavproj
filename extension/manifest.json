@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Write Assistant Pro",
+  "version": "1.0.0",
+  "description": "Grammarly-style writing helper that analyzes selected text for mood, context, tone, readability, and rewrite suggestions.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "contextMenus",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "all_frames": true,
+      "match_about_blank": true,
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content.css",
+        "tesseract.min.js",
+        "worker.min.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "Write Assistant",
+    "default_popup": "popup.html",
+    "default_icon": "logo.svg"
+  },
+  "icons": {
+    "16": "logo.svg",
+    "32": "logo.svg",
+    "48": "logo.svg",
+    "128": "logo.svg"
+  }
+}
